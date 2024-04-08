@@ -44,13 +44,17 @@ const { a, button, div, h1, h3, input, label, li, ul } = van.tags
  */
 const css = (v) => v.toString().slice(1, -1)
 
-// const username = van.state(JSON.parse(localStorage.username || 'null'))
-// van.derive(() => localStorage.username = JSON.stringify(username.val))
+const username = van.state(JSON.parse(localStorage.username || 'null'))
+van.derive(() => localStorage.username = JSON.stringify(username.val))
 
 const pat = van.state(JSON.parse(localStorage.pat || 'null'))
 van.derive(() => localStorage.pat = JSON.stringify(pat.val))
 
 const [_1, owner, repo, _2, number] = location.pathname.split('/')
+
+/**
+ * @type {Array<any>}
+ */
 const conversations = []
 let page = 1
 const error = van.state('')
@@ -91,23 +95,24 @@ van.add(
   h1(`${repo} PR #${number}`),
   div({ style: css`{color: red}` }, error),
   h3('Unresolved conversations'),
-  ul(
+  () => ul(
     conversations
+      .filter((c) => !username.val || c.user.login.includes(username.val))
       .filter((c) => c.position !== null)
       .map((c) => li(a({ href: c.html_url }, c.body.slice(0, 100)))),
   ),
   // h3('Configuration'),
   div(
-    //   { style: css`{display: grid; grid-template-columns: 1fr 1fr}` },
-    // label(
-    //   'Github username',
-    //   input({
-    //     type: 'text',
-    //     placeholder: 'same as repo owner',
-    //     value: username.val,
-    //     onchange: ({ target }) => username.val = target.value,
-    //   }),
-    // ),
+    { style: css`{display: grid; grid-template-columns: 1fr 1fr}` },
+    label(
+      'Show only comments by',
+      input({
+        type: 'text',
+        placeholder: 'undefined',
+        value: username.val,
+        oninput: ({ target }) => username.val = target.value,
+      }),
+    ),
     label(
       'Github Personal Access Token',
       input({
