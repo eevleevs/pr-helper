@@ -99,7 +99,7 @@ van.add(
     conversations
       .filter((c) => !username.val || c.user.login.includes(username.val))
       .filter((c) => c.position !== null)
-      .map((c) => li(a({ href: c.html_url }, c.body.slice(0, 100)))),
+      .map((c) => li(a({ href: c.html_url }, c.body))),
   ),
   // h3('Configuration'),
   div(
