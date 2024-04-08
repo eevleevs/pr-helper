@@ -3,6 +3,9 @@
     "semiColons": false,
     "singleQuote": true
   },
+  "imports": {
+    "hono/": "https://deno.land/x/hono@v4.2.2/"
+  },
   "tasks": {
     "start": "deno run --allow-env --allow-net --allow-read --watch server.ts"
   }

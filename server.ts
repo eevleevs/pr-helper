@@ -1,5 +1,6 @@
 import { transpile } from 'https://deno.land/x/emit@0.38.3/mod.ts'
-import { Hono } from 'https://deno.land/x/hono@v4.2.2/mod.ts'
+import { Hono } from 'hono/mod.ts'
+import { serveStatic } from 'hono/middleware.ts'
 
 const index = /* html */ `
   <!DOCTYPE html>
@@ -16,13 +17,7 @@ const index = /* html */ `
 `
 
 const app = new Hono()
-  .get(
-    '/client.js',
-    async (c) =>
-      c.body((await transpile(c.req.path)).get(c.req.path) ?? '', 200, {
-        'content-type': 'application/javascript',
-      }),
-  )
+  .use(serveStatic({ root: 'static' }))
   .get('*', (c) => c.html(index))
 
 Deno.serve(app.fetch)

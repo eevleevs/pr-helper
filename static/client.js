@@ -1,16 +1,21 @@
+// @ts-check
+
 /// <reference lib="dom" />
 
-// @deno-types=https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.min.d.ts
+// @deno-types="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.min.d.ts"
 import van from 'https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.min.js'
 
-async function getPRConversations(
-  owner: string,
-  repo: string,
-  number: string,
-  pat: string,
-): Promise<any[]> {
+/**
+ * @async
+ * @param {string} owner
+ * @param {string} repo
+ * @param {string} number
+ * @param {string} pat
+ * @returns {Promise<any[]>}
+ */
+async function getPRConversations(owner, repo, number, pat) {
   let page = 1
-  const allConversations: any[] = []
+  const allConversations = []
 
   while (true) {
     const response = await fetch(
@@ -32,7 +37,12 @@ async function getPRConversations(
 }
 
 const { a, button, div, h1, h3, input, label, li, ul } = van.tags
-const css = (v: TemplateStringsArray) => v.toString().slice(1, -1)
+
+/**
+ * @param {TemplateStringsArray} v
+ * @returns {string}
+ */
+const css = (v) => v.toString().slice(1, -1)
 
 const username = van.state(JSON.parse(localStorage.username || 'null'))
 van.derive(() => localStorage.username = JSON.stringify(username.val))
