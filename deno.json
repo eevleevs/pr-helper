@@ -1,0 +1,9 @@
+{
+  "fmt": {
+    "semiColons": false,
+    "singleQuote": true
+  },
+  "tasks": {
+    "start": "deno run --allow-env --allow-net --allow-read --watch server.ts"
+  }
+}
