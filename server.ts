@@ -15,11 +15,14 @@ const index = /* html */ `
   <script src="/client.js", type="module"></script>
 `
 
+const bundleClient = async () => (await bundle('./client.ts')).code
+const client = Deno.env.get('DENO_DEPLOYMENT_ID') ? null : await bundleClient()
+
 const app = new Hono()
   .get(
     '/client.js',
     async (c) =>
-      c.body((await bundle('./client.ts')).code, 200, {
+      c.body(client || await bundleClient(), 200, {
         'content-type': 'application/javascript',
       }),
   )
