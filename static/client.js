@@ -130,7 +130,7 @@ van.add(
   document.body,
   h1(`${repo} PR #${number}`),
   div({ style: css`{color: red}` }, error),
-  h3('Unresolved conversations'),
+  h3(conversations.length + ' unresolved conversations'),
   () => ul(
     conversations
       .filter((c) => !username.val || c.author.includes(username.val))
