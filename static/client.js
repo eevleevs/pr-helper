@@ -127,11 +127,16 @@ van.add(
   document.body,
   h1(`${repo} PR #${number}`),
   h3(conversations.length + ' unresolved conversations'),
-  () => ul(
-    conversations
-      .filter((c) => !username.val || c.author.includes(username.val))
-      .filter((c) => !c.isResolved)
-      .map((c) => li(a({ href: c.url, target: '_blank' }, c.body))),
+  div({
+    id: 'conversations',
+    onclick: ({ srcElement }) => srcElement.tagName == 'A' && srcElement.parentNode.remove(),
+  },
+    () => ul(
+      conversations
+        .filter((c) => !username.val || c.author.includes(username.val))
+        .filter((c) => !c.isResolved)
+        .map((c) => li(a({ href: c.url, target: '_blank' }, c.body))),
+    )
   ),
   // h3('Configuration'),
   div(
