@@ -60,7 +60,7 @@ const [_1, owner, repo, _2, number] = location.pathname.split('/')
  * @param {number} number - The number of the pull request.
  * @param {string} pat - The personal access token for authentication.
  * @param {string|null} [after=null] - The cursor for pagination.
- * @returns {Promise<Array<{isResolved: boolean, body: string, url: string, author: string}>>} - A promise that resolves to an array of conversation threads.
+ * @returns {Promise<Array<{id: string, isResolved: boolean, body: string, href: string, author: string}>>} - A promise that resolves to an array of conversation threads.
  * @throws {Error} When the fetch operation fails.
  */
 async function fetchConversations(owner, repo, number, pat, after = null) {
@@ -74,6 +74,7 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
               hasNextPage
             }
             nodes {
+              id
               isResolved
               comments(first: 1) {
                 nodes {
@@ -105,11 +106,12 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
   const data = await response.json();
   const threads = data.data.repository.pullRequest.reviewThreads;
   // @ts-ignore
-  const conversations = threads.nodes.map(thread => ({
-    isResolved: thread.isResolved,
-    body: thread.comments.nodes[0].body,
-    url: thread.comments.nodes[0].url,
-    author: thread.comments.nodes[0].author.login,
+  const conversations = threads.nodes.map(({ id, isResolved, comments }) => ({
+    id,
+    isResolved,
+    body: comments.nodes[0].body,
+    href: comments.nodes[0].url,
+    author: comments.nodes[0].author.login,
   }));
 
   if (threads.pageInfo.hasNextPage) {
@@ -120,22 +122,24 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
   return conversations;
 }
 
-const conversations = await fetchConversations(owner, repo, parseInt(number), pat.val)
+const conversations = van.state(await fetchConversations(owner, repo, parseInt(number), pat.val))
 
 van.add(
   // @ts-ignore: executed on client
   document.body,
   h1(`${repo} PR #${number}`),
-  h3(conversations.length + ' unresolved conversations'),
+  h3(conversations.val.length + ' unresolved conversations'),
   div({
-    id: 'conversations',
-    onclick: ({ srcElement }) => srcElement.tagName == 'A' && srcElement.parentNode.remove(),
+    onmouseup: ({ button, srcElement }) => {
+      if (button > 1) return
+      conversations.val = conversations.val.filter(({ id }) => id !== srcElement.id)
+    }
   },
     () => ul(
-      conversations
-        .filter((c) => !username.val || c.author.includes(username.val))
-        .filter((c) => !c.isResolved)
-        .map((c) => li(a({ href: c.url, target: '_blank' }, c.body))),
+      conversations.val
+        .filter(({ author }) => !username.val || author.includes(username.val))
+        .filter(({ isResolved }) => !isResolved)
+        .map(({ id, href, body }) => li(a({ id, href, target: '_blank' }, body))),
     )
   ),
   // h3('Configuration'),
