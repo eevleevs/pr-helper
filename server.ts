@@ -19,7 +19,7 @@ const app = new Hono()
   .get(
     '/client.js',
     async (c) =>
-      c.body((await bundle('client.ts')).code, 200, {
+      c.body((await bundle('./client.ts')).code, 200, {
         'content-type': 'application/javascript',
       }),
   )
