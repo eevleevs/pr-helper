@@ -1,4 +1,3 @@
-import { transpile } from 'https://deno.land/x/emit@0.38.3/mod.ts'
 import { Hono } from 'hono/mod.ts'
 import { serveStatic } from 'hono/middleware.ts'
 
@@ -13,11 +12,11 @@ const index = /* html */ `
   <style>
     input {width: 15em}
   </style>
-  <script src="/client.js", type="module"></script>
+  <script src="/client.js" type="module"></script>
 `
 
 const app = new Hono()
   .use(serveStatic({ root: 'static' }))
-  .get('*', (c) => c.html(index))
+  .get((c) => c.html(index))
 
 Deno.serve(app.fetch)

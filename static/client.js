@@ -51,7 +51,6 @@ const pat = van.state(JSON.parse(localStorage.pat || 'null'))
 van.derive(() => localStorage.pat = JSON.stringify(pat.val))
 
 const [_1, owner, repo, _2, number] = location.pathname.split('/')
-const error = van.state('')
 
 /**
  * Fetches conversation threads from a GitHub pull request.
@@ -101,9 +100,7 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
     body: JSON.stringify({ query }),
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch conversations');
-  }
+  if (!response.ok) return []
 
   const data = await response.json();
   const threads = data.data.repository.pullRequest.reviewThreads;
@@ -129,7 +126,6 @@ van.add(
   // @ts-ignore: executed on client
   document.body,
   h1(`${repo} PR #${number}`),
-  div({ style: css`{color: red}` }, error),
   h3(conversations.length + ' unresolved conversations'),
   () => ul(
     conversations
