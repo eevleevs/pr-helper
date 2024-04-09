@@ -6,37 +6,6 @@
 import van from 'https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.min.js'
 
 /**
- * @async
- * @param {string} owner
- * @param {string} repo
- * @param {string} number
- * @param {string} pat
- * @returns {Promise<any[]>}
- */
-async function getPRConversations(owner, repo, number, pat) {
-  let page = 1
-  const allConversations = []
-
-  while (true) {
-    const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/issues/${number}/comments?page=${page}`,
-      {
-        headers: { Authorization: `token ${pat}` },
-      },
-    )
-    const data = await response.json()
-    if (Array.isArray(data) && data.length > 0) {
-      allConversations.push(...data)
-      page++
-    } else {
-      break
-    }
-  }
-
-  return allConversations
-}
-
-/**
  * Calculates the SHA-256 hash of the given plain text.
  * @param {string} plain - The plain text to calculate the hash for.
  * @returns {Promise<string>} A promise that resolves to the SHA-256 hash as a hexadecimal string.
@@ -164,6 +133,19 @@ conversations.val = conversations.val.filter(({ id }) => !exclusions.includes(id
 
 const { a, button, div, h1, h3, input, label, li, ul } = van.tags
 
+/**
+ * Exclude a conversation by ID.
+ * @param {HTMLElement} srcElement - The source element triggering the exclusion.
+ */
+function exclude(srcElement) {
+  conversations.val = conversations.val.filter(({ id }) => id !== srcElement.id)
+  fetch(`/exclusions/${hashedPat}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify([srcElement.id]),
+  })
+}
+
 van.add(
   document.body,
   h1(`${repo} PR #${number}`),
@@ -171,13 +153,7 @@ van.add(
   div({
     id: 'conversations',
     onmouseup: ({ button, srcElement }) => {
-      if (button > 1) return
-      conversations.val = conversations.val.filter(({ id }) => id !== srcElement.id)
-      fetch(`/exclusions/${hashedPat}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify([srcElement.id]),
-      })
+      if (button <= 1) exclude(srcElement)
     }
   },
     () => ul(
@@ -200,14 +176,17 @@ van.add(
     onclick: async () => {
       for (const element of Array.from(
         document.querySelectorAll('#conversations a')
-      ).filter((_, i) => i < 10)) {
-        console.log(element)
+      ).filter((_, i) => i < 5)) {
+        // @ts-ignore
+        window.open(element.href)
+        // @ts-ignore
+        exclude(element)
       }
     }
-  }, 'Open 10'),
+  }, 'Open 5'),
   h3('Configuration'),
   div(
-    { style: css`{display: grid; grid-template-columns: 1fr 1fr}` },
+    { style: css`{display: grid; grid-template-columns: 1fr 1fr 1fr}` },
     label(
       'Show only comments by',
       input({
