@@ -128,7 +128,6 @@ van.add(
   // @ts-ignore: executed on client
   document.body,
   h1(`${repo} PR #${number}`),
-  h3(conversations.val.length + ' unresolved conversations'),
   div({
     onmouseup: ({ button, srcElement }) => {
       if (button > 1) return
@@ -142,7 +141,6 @@ van.add(
         .map(({ id, href, body }) => li(a({ id, href, target: '_blank' }, body))),
     )
   ),
-  // h3('Configuration'),
   div(
     { style: css`{display: grid; grid-template-columns: 1fr 1fr}` },
     label(
