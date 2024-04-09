@@ -112,17 +112,23 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
     }
   `;
 
-  const response = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `bearer ${pat}`,
-    },
-    body: JSON.stringify({ query }),
-  })
+  let response
+  try {
+    response = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `bearer ${pat}`,
+      },
+      body: JSON.stringify({ query }),
+    })
+  } catch (error) {
+    error.val = error.message
+    return []
+  }
 
   if (!response.ok) {
-    error.val = response.statusText
+    error.val = response.statusText || `Error ${response.status}` + (response.status == 401 ? ': unauthorised; set Personal Access Token' : '') + '.'
     return []
   }
 
@@ -197,7 +203,10 @@ van.add(
         type: 'password',
         placeholder: 'undefined',
         value: pat.val,
-        onchange: ({ target }) => pat.val = target.value,
+        onchange: ({ target }) => {
+          pat.val = target.value
+          location.reload()
+        },
       }),
     ),
     div({ style: css`{text-align: center}` },
