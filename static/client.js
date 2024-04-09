@@ -36,25 +36,44 @@ async function getPRConversations(owner, repo, number, pat) {
   return allConversations
 }
 
-const { a, button, div, h1, h3, input, label, li, ul } = van.tags
+/**
+ * Calculates the SHA-256 hash of the given plain text.
+ * @param {string} plain - The plain text to calculate the hash for.
+ * @returns {Promise<string>} A promise that resolves to the SHA-256 hash as a hexadecimal string.
+ */
+function sha256(plain) {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(plain)
+  const hashBuffer = crypto.subtle.digest('SHA-256', data)
+  return hashBuffer.then(hashBuffer => {
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  })
+}
+
 
 /**
  * @param {TemplateStringsArray} v
  * @returns {string}
- */
+*/
 const css = (v) => v.toString().slice(1, -1)
 
 const username = van.state(JSON.parse(localStorage.username || 'null'))
 van.derive(() => localStorage.username = JSON.stringify(username.val))
 
 const pat = van.state(JSON.parse(localStorage.pat || 'null'))
-van.derive(() => localStorage.pat = JSON.stringify(pat.val))
+let hashedPat = ''
+van.derive(async () => {
+  localStorage.pat = JSON.stringify(pat.val)
+  hashedPat = await sha256(pat.val)
+})
 
 const [_1, owner, repo, _2, number] = location.pathname.split('/')
+const error = van.state('')
 
 /**
  * Fetches conversation threads from a GitHub pull request.
- *
+*
  * @param {string} owner - The owner of the repository.
  * @param {string} repo - The name of the repository.
  * @param {number} number - The number of the pull request.
@@ -64,6 +83,7 @@ const [_1, owner, repo, _2, number] = location.pathname.split('/')
  * @throws {Error} When the fetch operation fails.
  */
 async function fetchConversations(owner, repo, number, pat, after = null) {
+  error.val = ''
   const query = `
     query {
       repository(owner: "${owner}", name: "${repo}") {
@@ -99,12 +119,21 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
       'Authorization': `bearer ${pat}`,
     },
     body: JSON.stringify({ query }),
-  });
+  })
 
-  if (!response.ok) return []
+  if (!response.ok) {
+    error.val = response.statusText
+    return []
+  }
 
-  const data = await response.json();
-  const threads = data.data.repository.pullRequest.reviewThreads;
+  const data = await response.json()
+  if (data.errors) {
+    // @ts-ignore
+    error.val = data.errors.map(({ message }) => message).join('<br>')
+    return []
+  }
+
+  const threads = data.data.repository.pullRequest.reviewThreads
   // @ts-ignore
   const conversations = threads.nodes.map(({ id, isResolved, comments }) => ({
     id,
@@ -116,22 +145,32 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
 
   if (threads.pageInfo.hasNextPage) {
     const nextPageConversations = await fetchConversations(owner, repo, number, pat, threads.pageInfo.endCursor);
-    conversations.push(...nextPageConversations);
+    conversations.push(...nextPageConversations)
   }
 
-  return conversations;
+  return conversations
 }
 
 const conversations = van.state(await fetchConversations(owner, repo, parseInt(number), pat.val))
 
+const exclusions = await (await fetch(`/exclusions/${hashedPat}`)).json()
+conversations.val = conversations.val.filter(({ id }) => !exclusions.includes(id))
+
+const { a, button, div, h1, input, label, li, ul } = van.tags
+
 van.add(
-  // @ts-ignore: executed on client
   document.body,
   h1(`${repo} PR #${number}`),
+  div({ style: css`{color: red}` }, error),
   div({
     onmouseup: ({ button, srcElement }) => {
       if (button > 1) return
       conversations.val = conversations.val.filter(({ id }) => id !== srcElement.id)
+      fetch(`/exclusions/${hashedPat}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([srcElement.id]),
+      })
     }
   },
     () => ul(
@@ -142,7 +181,7 @@ van.add(
     )
   ),
   div(
-    { style: css`{display: grid; grid-template-columns: 1fr 1fr}` },
+    { style: css`{display: grid; grid-template-columns: 1fr 1fr 1fr}` },
     label(
       'Show only comments by',
       input({
@@ -161,6 +200,13 @@ van.add(
         onchange: ({ target }) => pat.val = target.value,
       }),
     ),
+    div({ style: css`{text-align: center}` },
+      button({
+        style: css`{margin-top: 1.35em;}`,
+        onclick: async () => {
+          await fetch(`/exclusions/${hashedPat}`, { method: 'DELETE' })
+          location.reload()
+        },
+      }, 'Reset Exclusions')),
   ),
-  button({ onclick: () => location.reload() }, 'Reload'),
 )
