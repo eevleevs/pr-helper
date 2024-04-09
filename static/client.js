@@ -162,13 +162,14 @@ const conversations = van.state(await fetchConversations(owner, repo, parseInt(n
 const exclusions = await (await fetch(`/exclusions/${hashedPat}`)).json()
 conversations.val = conversations.val.filter(({ id }) => !exclusions.includes(id))
 
-const { a, button, div, h1, input, label, li, ul } = van.tags
+const { a, button, div, h1, h3, input, label, li, ul } = van.tags
 
 van.add(
   document.body,
   h1(`${repo} PR #${number}`),
   div({ style: css`{color: red}` }, error),
   div({
+    id: 'conversations',
     onmouseup: ({ button, srcElement }) => {
       if (button > 1) return
       conversations.val = conversations.val.filter(({ id }) => id !== srcElement.id)
@@ -186,8 +187,27 @@ van.add(
         .map(({ id, href, body }) => li(a({ id, href, target: '_blank' }, body))),
     )
   ),
+  button({
+    onclick: async () => location.reload()
+  }, 'Reload'),
+  button({
+    onclick: async () => {
+      await fetch(`/exclusions/${hashedPat}`, { method: 'DELETE' })
+      location.reload()
+    },
+  }, 'Reset'),
+  button({
+    onclick: async () => {
+      for (const element of Array.from(
+        document.querySelectorAll('#conversations a')
+      ).filter((_, i) => i < 10)) {
+        console.log(element)
+      }
+    }
+  }, 'Open 10'),
+  h3('Configuration'),
   div(
-    { style: css`{display: grid; grid-template-columns: 1fr 1fr 1fr}` },
+    { style: css`{display: grid; grid-template-columns: 1fr 1fr}` },
     label(
       'Show only comments by',
       input({
@@ -209,13 +229,5 @@ van.add(
         },
       }),
     ),
-    div({ style: css`{text-align: center}` },
-      button({
-        style: css`{margin-top: 1.35em;}`,
-        onclick: async () => {
-          await fetch(`/exclusions/${hashedPat}`, { method: 'DELETE' })
-          location.reload()
-        },
-      }, 'Reset Exclusions')),
   ),
 )
