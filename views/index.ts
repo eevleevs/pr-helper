@@ -9,5 +9,5 @@ export default /* html */ `
   <style>
     input {width: 15em}
   </style>
-  <script src="/client.js" type="module"></script>
+  <script src="/static/client.js" type="module"></script>
 `

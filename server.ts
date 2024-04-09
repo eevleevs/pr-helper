@@ -1,10 +1,30 @@
-import { Context, Hono } from 'hono/mod.ts'
-import { serveStatic } from 'hono/middleware.ts'
-
+import nhttp, { Router } from 'nhttp/mod.ts'
+import { serveStatic } from 'nhttp/lib/serve-static.ts'
 import index from './views/index.ts'
 
-const app = new Hono()
-  .use(serveStatic({ root: 'static' }))
-  .get((c: Context) => c.html(index))
+const kv = await Deno.openKv()
 
-Deno.serve(app.fetch)
+const getExclusions = async (pat: string) =>
+  (await kv.get<string[]>([pat])).value ?? []
+
+nhttp()
+  .use(
+    '/exclusions/:pat',
+    new Router()
+      .get('/', async ({ params }) => await getExclusions(params.pat))
+      .post('/', async ({ body, params, response }) => {
+        const data = body as Array<string>
+        await kv.set(
+          [params.pat],
+          Array.from(new Set((await getExclusions(params.pat)).concat(data))),
+        )
+        return response.sendStatus(204)
+      })
+      .delete('/', async ({ params, response }) => {
+        await kv.delete([params.pat])
+        return response.sendStatus(204)
+      }),
+  )
+  .use(serveStatic('static', { prefix: '/static' }))
+  .get('*', ({ response }) => response.html(index))
+  .listen(8000)
