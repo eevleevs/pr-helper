@@ -128,7 +128,7 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
   }
 
   if (!response.ok) {
-    error.val = response.statusText || `Error ${response.status}` + (response.status == 401 ? ': unauthorised; set Personal Access Token' : '') + '.'
+    error.val = response.statusText || `Error ${response.status}` + (response.status == 401 ? ': unauthorised. Set a Personal Access Token with read permissions for discussion, user, repo' : '') + '.'
     return []
   }
 
