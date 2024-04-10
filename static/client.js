@@ -128,7 +128,7 @@ const conversations = await fetchConversations(owner, repo, parseInt(number), pa
 van.add(
   // @ts-ignore: executed on client
   document.body,
-  h1(`${repo} PR #${number}`),
+  h1(`${repo} PR `, a({ href: `https://github.com${location.pathname}` }, `#${number}`)),
   div({ style: css`{color: red}` }, error),
   h3(conversations.length + ' unresolved conversations'),
   () => ul(
