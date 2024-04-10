@@ -5,6 +5,8 @@
 // @deno-types="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.min.d.ts"
 import van from 'https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.min.js'
 
+const { a, button, code, div, h1, h3, input, label, li, style, ul } = van.tags
+
 /**
  * Calculates the SHA-256 hash of the given plain text.
  * @param {string} plain - The plain text to calculate the hash for.
@@ -19,7 +21,6 @@ function sha256(plain) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
   })
 }
-
 
 /**
  * @param {TemplateStringsArray} v
@@ -113,7 +114,12 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
   const conversations = threads.nodes.map(({ id, isResolved, comments }) => ({
     id,
     isResolved,
-    body: comments.nodes[0].body,
+    body: comments.nodes[0].body
+      .split(/```/g)
+      .map((p, i) => i % 2
+        ? code(p.replace(/^suggestion/, ''))
+        : p
+      ),
     href: comments.nodes[0].url,
     author: comments.nodes[0].author.login,
   }));
@@ -131,8 +137,6 @@ const conversations = van.state(await fetchConversations(owner, repo, parseInt(n
 const exclusions = await (await fetch(`/exclusions/${hashedPat}`)).json()
 conversations.val = conversations.val.filter(({ id }) => !exclusions.includes(id))
 
-const { a, button, div, h1, h3, input, label, li, ul } = van.tags
-
 /**
  * Exclude a conversation by ID.
  * @param {HTMLElement} srcElement - The source element triggering the exclusion.
@@ -147,13 +151,25 @@ function exclude(srcElement) {
 }
 
 van.add(
+  document.head,
+  style(css`
+    a, a:visited {
+      color: inherit;
+    }
+    a > code {
+      color: var(--code);
+    }
+  `)
+)
+
+van.add(
   document.body,
   h1(`${repo} PR `, a({ href: `https://github.com${location.pathname}` }, `#${number}`)),
   div({ style: css`{color: red}` }, error),
   div({
     id: 'conversations',
     onmouseup: ({ button, srcElement }) => {
-      if (button <= 1) exclude(srcElement)
+      if (button <= 1) exclude(srcElement.parentElement)
     }
   },
     () => ul(
