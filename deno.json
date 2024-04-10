@@ -4,9 +4,9 @@
     "singleQuote": true
   },
   "imports": {
-    "hono/": "https://deno.land/x/hono@v4.2.2/"
+    "nhttp/": "https://deno.land/x/nhttp@1.3.25/"
   },
   "tasks": {
-    "start": "deno run --allow-env --allow-net --allow-read --watch server.ts"
+    "start": "deno run --allow-env --allow-net --allow-read --unstable-kv --watch server.ts"
   }
 }

@@ -1,23 +1,30 @@
-import { transpile } from 'https://deno.land/x/emit@0.38.3/mod.ts'
-import { Hono } from 'hono/mod.ts'
-import { serveStatic } from 'hono/middleware.ts'
+import nhttp, { Router } from 'nhttp/mod.ts'
+import { serveStatic } from 'nhttp/lib/serve-static.ts'
+import index from './views/index.ts'
 
-const index = /* html */ `
-  <!DOCTYPE html>
-  ${
-  Deno.env.get('DENO_DEPLOYMENT_ID')
-    ? ''
-    : '<script src="http://localhost:35729/livereload.js?snipver=1"></script>'
-}
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-  <style>
-    input {width: 15em}
-  </style>
-  <script src="/client.js", type="module"></script>
-`
+const kv = await Deno.openKv()
 
-const app = new Hono()
-  .use(serveStatic({ root: 'static' }))
-  .get('*', (c) => c.html(index))
+const getExclusions = async (pat: string) =>
+  (await kv.get<string[]>([pat])).value ?? []
 
-Deno.serve(app.fetch)
+nhttp()
+  .use(
+    '/exclusions/:pat',
+    new Router()
+      .get('/', async ({ params }) => await getExclusions(params.pat))
+      .post('/', async ({ body, params, response }) => {
+        const data = body as Array<string>
+        await kv.set(
+          [params.pat],
+          Array.from(new Set((await getExclusions(params.pat)).concat(data))),
+        )
+        return response.sendStatus(204)
+      })
+      .delete('/', async ({ params, response }) => {
+        await kv.delete([params.pat])
+        return response.sendStatus(204)
+      }),
+  )
+  .use(serveStatic('static', { prefix: '/static' }))
+  .get('*', ({ response }) => response.html(index))
+  .listen(8000)
