@@ -163,9 +163,7 @@ van.add(
         .map(({ id, href, body }) => li(a({ id, href, target: '_blank' }, body))),
     )
   ),
-  button({
-    onclick: async () => location.reload()
-  }, 'Reload'),
+  button({ onclick: () => location.reload() }, 'Reload'),
   button({
     onclick: async () => {
       await fetch(`/exclusions/${hashedPat}`, { method: 'DELETE' })
