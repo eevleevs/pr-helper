@@ -116,9 +116,14 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
     isResolved,
     body: comments.nodes[0].body
       .split(/```/g)
-      .map((p, i) => i % 2
-        ? code(p.replace(/^suggestion/, ''))
-        : p
+      .map(
+        /**
+         * @param {string} p
+         * @param {number} i
+        */
+        (p, i) => i % 2
+          ? code(p.replace(/^suggestion/, ''))
+          : p
       ),
     href: comments.nodes[0].url,
     author: comments.nodes[0].author.login,
