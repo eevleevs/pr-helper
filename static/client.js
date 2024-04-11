@@ -5,7 +5,7 @@
 // @deno-types="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.min.d.ts"
 import van from 'https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.min.js'
 
-const { a, button, code, div, h1, h3, input, label, li, style, ul } = van.tags
+const { a, br, button, code, div, h1, h3, input, label, li, pre, style, ul } = van.tags
 
 /**
  * Calculates the SHA-256 hash of the given plain text.
@@ -121,9 +121,13 @@ async function fetchConversations(owner, repo, number, pat, after = null) {
          * @param {string} p
          * @param {number} i
         */
-        (p, i) => i % 2
-          ? code(p.replace(/^suggestion/, ''))
+        (p, i) => div(i % 2
+          ? pre(code(p.trim()
+            .replace(/^suggestion/, '')
+            .replace(/^(\s*\n+)+/, '')
+          ))
           : p
+        )
       ),
     href: comments.nodes[0].url,
     author: comments.nodes[0].author.login,
