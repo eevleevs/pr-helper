@@ -162,7 +162,7 @@ function exclude(srcElement) {
 van.add(
   document.head,
   style(css`
-    a, a:visited {
+    #conversations a, #conversations a:visited {
       color: inherit;
     }
     a > code {
