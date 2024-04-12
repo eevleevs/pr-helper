@@ -1,5 +1,7 @@
 /// <reference lib="dom" />
 
+import type { Exclusions } from '../exclusions.ts'
+
 // @deno-types="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.min.d.ts"
 import van from 'https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.5.0.min.js'
 
@@ -151,7 +153,8 @@ const conversations = van.state(
   await fetchConversations(owner, repo, parseInt(number), pat.val),
 )
 
-const exclusions = await (await fetch(`/exclusions/${hashedPat}`)).json()
+const exclusions: Exclusions = await (await fetch(`/exclusions/${hashedPat}`))
+  .json()
 conversations.val = conversations.val.filter(({ id }) =>
   !exclusions.includes(id)
 )
@@ -161,7 +164,7 @@ function excludeConversation(srcElement: HTMLElement) {
   fetch(`/exclusions/${hashedPat}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify([srcElement.id]),
+    body: JSON.stringify([srcElement.id] as Exclusions),
   })
 }
 
