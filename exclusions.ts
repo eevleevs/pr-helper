@@ -4,11 +4,14 @@ const kv = await Deno.openKv()
 
 export type Exclusions = string[]
 
-const getExclusions = async (pat: string): Promise<Exclusions> =>
+const getExclusions = async (pat: string) =>
   (await kv.get<Exclusions>([pat])).value ?? []
 
 export const exclusionsRouter = new Router({ base: '/:pat' })
-  .get('/', async ({ params }) => await getExclusions(params.pat))
+  .get(
+    '/',
+    async ({ params }): Promise<Exclusions> => await getExclusions(params.pat),
+  )
   .post('/', async ({ body, params, response }) => {
     await kv.set(
       [params.pat],
