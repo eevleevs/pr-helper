@@ -1,6 +1,7 @@
 import nhttp, { Router } from 'nhttp/mod.ts'
-import { serveStatic } from 'nhttp/lib/serve-static.ts'
-import index from './views/index.ts'
+import { serveDirWithTs } from 'https://deno.land/x/ts_serve@v1.4.4/mod.ts'
+
+import index from './ssr/index.ts'
 
 const kv = await Deno.openKv()
 
@@ -25,6 +26,6 @@ nhttp()
         return response.sendStatus(204)
       }),
   )
-  .use(serveStatic('static', { prefix: '/static' }))
+  .use('/csr', ({ request }) => serveDirWithTs(request))
   .get('*', ({ response }) => response.html(index))
   .listen(8000)
