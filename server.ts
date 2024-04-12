@@ -14,10 +14,11 @@ nhttp()
     new Router()
       .get('/', async ({ params }) => await getExclusions(params.pat))
       .post('/', async ({ body, params, response }) => {
-        const data = body as Array<string>
         await kv.set(
           [params.pat],
-          Array.from(new Set((await getExclusions(params.pat)).concat(data))),
+          Array.from(
+            new Set((await getExclusions(params.pat)).concat(body as string[])),
+          ),
         )
         return response.sendStatus(204)
       })
