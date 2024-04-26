@@ -178,7 +178,7 @@ van.add(
   div({
     id: 'conversations',
     onmouseup: ({ button, srcElement }) => {
-      if (button <= 1) excludeConversation(srcElement.parentElement)
+      if (button <= 1) excludeConversation(srcElement.closest('li'))
     },
   }, () =>
     ul(
@@ -186,7 +186,7 @@ van.add(
         .filter(({ author }) => !username.val || author.includes(username.val))
         .filter(({ isResolved }) => !isResolved)
         .map(({ id, href, body }) =>
-          li(a({ id, href, target: '_blank' }, body))
+          li({ id }, a({ href, target: '_blank' }, body))
         ),
     )),
   button({ onclick: () => location.reload() }, 'Reload'),
